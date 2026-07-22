@@ -13,13 +13,12 @@ const PLATFORM_LABEL: Record<string, string> = {
   youtube: 'YouTube',
 }
 
-export function SummaryCard({ inputs }: { inputs: SimInputs }) {
-  const handle = inputs.handle.trim()
-    ? inputs.handle.startsWith('@')
-      ? inputs.handle
-      : `@${inputs.handle}`
-    : 'your account'
+export function SummaryCard({ inputs, platforms }: { inputs: SimInputs; platforms: string[] }) {
+  const handle = inputs.handle.trim() ? inputs.handle.startsWith('@') ? inputs.handle: `@${inputs.handle}` : 'your account'
   const source = inputs.modality === 'text' ? 'a text post' : inputs.fileName || `a ${inputs.modality}`
+  const platformText = platforms.length
+    ? platforms.map((p) => PLATFORM_LABEL[p] ?? p).join(' + ')
+    : 'no platform connected'
 
   return (
     <Card className="bg-canvas p-4">
@@ -32,7 +31,7 @@ export function SummaryCard({ inputs }: { inputs: SimInputs }) {
           <AtSign className="h-4 w-4 shrink-0 text-brand-600" />
           <span className="truncate">
             {handle}
-            <span className="text-muted"> on {PLATFORM_LABEL[inputs.platform] ?? inputs.platform}</span>
+            <span className="text-muted"> on {platformText}</span>
           </span>
         </li>
         <li className="flex items-center gap-2">

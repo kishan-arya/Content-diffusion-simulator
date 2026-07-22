@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
-import { Camera, PlaySquare, Video, Image as ImageIcon, Type, Link2, Loader2 } from 'lucide-react'
+import { Camera, PlaySquare, Video, Image as ImageIcon, Type, Link2, Loader2, Check } from 'lucide-react'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { FloatingBackdrop } from '../components/layout/FloatingBackdrop'
@@ -9,10 +9,10 @@ import { Field, Input, Textarea } from '../components/ui/Field'
 import { TagInput } from '../components/ui/TagInput'
 import Stepper, { Step } from '../components/ui/Stepper'
 import { Segmented } from '../components/getstarted/Segmented'
-import { ConnectCard } from '../components/getstarted/ConnectCard'
 import { Dropzone } from '../components/getstarted/Dropzone'
 import { SummaryCard } from '../components/getstarted/SummaryCard'
 import { useSimulation, type Modality } from '../state/SimulationContext'
+import { useToast } from '../components/ui/Toast'
 import { EASE } from '../lib/motion'
 
 const PLATFORM_OPTIONS: { value: string; label: string; icon: ReactNode }[] = [
@@ -42,34 +42,45 @@ function Hint({ show, children }: { show: boolean; children: ReactNode }) {
 
 export default function GetStartedPage() {
   const navigate = useNavigate()
-  const { inputs, setInputs, reset, connect } = useSimulation()
-  const [connecting, setConnecting] = useState(false)
+  const { inputs, setInputs, reset, connect, disconnect, creator } = useSimulation()
+  const { toast } = useToast()
+  const [connecting, setConnecting] = useState<string | null>(null)
   const [step, setStep] = useState(1)
 
   useEffect(() => {reset()}, [reset])
+
+  const connected = creator?.platforms ?? []
 
   // preventing continue on form when input not added on given step
   const contentReady = inputs.modality === 'text' ? inputs.description.trim().length > 0 : inputs.fileName.length > 0
   const canContinue = step === 1 ? inputs.authorized : step === 2 ? contentReady : inputs.description.trim().length > 0
 
-  // L2
-  const connectAccount = async () => {
+  const connectAccount = async (platform: string) => {
     if (!inputs.handle.trim() || connecting) return
-    setConnecting(true)
+    setConnecting(platform)
     try {
-      await connect(inputs.handle.trim(), inputs.platform)
+      const profile = await connect(inputs.handle.trim(), platform)
+      if (!profile.platforms.includes(platform)) {
+        toast(
+          `${PLATFORM_OPTIONS.find((p) => p.value === platform)?.label ?? platform} didn't finish connecting — complete the login in the popup, then try again.`,
+          'error',
+        )
+      }
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Connection failed. Please try again.', 'error')
     } finally {
-      setConnecting(false)
+      setConnecting(null)
     }
   }
 
-  const onHandleChange = (handle: string) => setInputs({ handle, authorized: false })
-  const onPlatformChange = (platform: string) => {
-    if (platform !== inputs.platform) setInputs({ platform, authorized: false })
+  // the backend user_id derives from the handle, so editing it invalidates connections
+  const onHandleChange = (handle: string) => {
+    setInputs({ handle })
+    if (inputs.authorized || creator) disconnect()
   }
 
   const onModalityChange = (modality: Modality) => {
-    if (modality !== inputs.modality) setInputs({ modality, fileName: '' })
+    if (modality !== inputs.modality) setInputs({ modality, fileName: '', file: null })
   }
 
   return (
@@ -130,46 +141,77 @@ export default function GetStartedPage() {
                     id="handle"
                     placeholder="@yourhandle"
                     value={inputs.handle}
-                    disabled={connecting}
+                    disabled={connecting !== null}
                     onChange={(e) => onHandleChange(e.target.value)}
                   />
                 </Field>
 
-                <Field label="Platform">
-                  <div className={connecting ? 'pointer-events-none opacity-60' : undefined}>
-                    <Segmented
-                      ariaLabel="Platform"
-                      options={PLATFORM_OPTIONS}
-                      value={inputs.platform}
-                      onChange={onPlatformChange}
-                    />
+                <Field
+                  label="Platforms"
+                  hint="Connect one or both — link Instagram and YouTube together and Reech calibrates on your combined audience."
+                >
+                  <div className="grid gap-px border border-line bg-line">
+                    {PLATFORM_OPTIONS.map((p) => {
+                      const isConnected = connected.includes(p.value)
+                      const isConnecting = connecting === p.value
+                      return (
+                        <div key={p.value} className="flex items-center gap-3 bg-white p-3.5">
+                          <span
+                            className={`grid h-10 w-10 shrink-0 place-items-center border ${
+                              isConnected
+                                ? 'border-brand-200 bg-brand-50 text-brand-700'
+                                : 'border-line bg-canvas text-muted'
+                            }`}
+                          >
+                            {p.icon}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-ink">{p.label}</p>
+                            <p className="truncate text-xs text-muted">
+                              {isConnected
+                                ? `Connected · ${inputs.handle.trim() || 'your account'}`
+                                : isConnecting
+                                  ? 'Finish the login in the popup, then close it…'
+                                  : 'Not connected'}
+                            </p>
+                          </div>
+                          {isConnected ? (
+                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-600 text-white">
+                              <Check className="h-4 w-4" />
+                            </span>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onClick={() => connectAccount(p.value)}
+                              disabled={connecting !== null || !inputs.handle.trim()}
+                            >
+                              {isConnecting ? (
+                                <>
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Connecting…
+                                </>
+                              ) : (
+                                <>
+                                  <Link2 className="h-3.5 w-3.5" /> Connect
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 </Field>
 
-                {inputs.authorized ? (
-                  <ConnectCard handle={inputs.handle} platform={inputs.platform} />
-                ) : (
-                  <Button
-                    className="w-full"
-                    onClick={connectAccount}
-                    disabled={connecting || !inputs.handle.trim()}
-                  >
-                    {connecting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" /> Connecting…
-                      </>
-                    ) : (
-                      <>
-                        <Link2 className="h-4 w-4" /> Connect account
-                      </>
-                    )}
-                  </Button>
-                )}
-
                 <Hint show={!inputs.authorized}>
-                  {inputs.handle.trim()
-                    ? 'Connect your account to continue.'
-                    : 'Enter your creator handle, then connect.'}
+                  {connecting
+                    ? 'Complete the login in the popup window, then close it.'
+                    : inputs.handle.trim()
+                      ? 'Connect at least one platform to continue.'
+                      : 'Enter your creator handle, then connect a platform.'}
+                </Hint>
+                <Hint show={inputs.authorized && connected.length === 1}>
+                  You can connect the other platform too — Reech blends both into one sharper
+                  creator profile.
                 </Hint>
               </div>
             </Step>
@@ -209,8 +251,8 @@ export default function GetStartedPage() {
                     <Dropzone
                       modality={inputs.modality}
                       fileName={inputs.fileName}
-                      onFile={(fileName) => setInputs({ fileName })}
-                      onClear={() => setInputs({ fileName: '' })}
+                      onFile={(fileName, file) => setInputs({ fileName, file })}
+                      onClear={() => setInputs({ fileName: '', file: null })}
                     />
                   )}
                 </motion.div>
@@ -249,7 +291,7 @@ export default function GetStartedPage() {
                   />
                 </Field>
 
-                <SummaryCard inputs={inputs} />
+                <SummaryCard inputs={inputs} platforms={connected} />
 
                 <Hint show={!inputs.description.trim()}>
                   Add a description to run the simulation.

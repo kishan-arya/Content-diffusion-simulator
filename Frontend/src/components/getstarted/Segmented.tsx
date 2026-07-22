@@ -19,7 +19,7 @@ export function Segmented<T extends string>({options,value,onChange,ariaLabel,}:
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className="inline-flex w-full gap-1 rounded-2xl border border-line bg-neutral-100 p-1"
+      className="inline-flex w-full gap-1 border border-line bg-neutral-100 p-1"
     >
       {options.map((opt) => {
         const active = opt.value === value
@@ -31,7 +31,7 @@ export function Segmented<T extends string>({options,value,onChange,ariaLabel,}:
             aria-selected={active}
             onClick={() => onChange(opt.value)}
             className={cn(
-              'relative flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-semibold sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm',
+              'relative flex flex-1 items-center justify-center gap-1.5 px-2 py-2 text-xs font-semibold sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm',
               'transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40',
               active ? 'text-brand-700' : 'text-muted hover:text-ink',
             )}
@@ -39,8 +39,8 @@ export function Segmented<T extends string>({options,value,onChange,ariaLabel,}:
             {active && (
               <motion.span
                 layoutId={`seg-${ariaLabel ?? 'default'}`}
-                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                className="absolute inset-0 rounded-xl bg-white shadow-sm ring-1 ring-black/4"
+                transition={{ type: 'tween', duration: 0.25, ease: 'easeOut' }}
+                className="absolute inset-0 bg-white shadow-sm ring-1 ring-black/4"
               />
             )}
             <motion.span

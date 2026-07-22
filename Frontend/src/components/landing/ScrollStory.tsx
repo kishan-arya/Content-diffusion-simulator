@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useScroll, useTransform, useMotionValueEvent, type MotionValue } from 'motion/react'
 import { ArrowRight, ChevronDown, Check, Zap, Heart, MessageCircle, Share2, TrendingUp } from 'lucide-react'
@@ -37,21 +37,20 @@ export function ScrollStory() {
 function MarqueeFeed({ p }: { p: MotionValue<number> }) {
   const opacity = useTransform(p, [0, 0.1, 0.17], [1, 1, 0])
   const scale = useTransform(p, [0, 0.17], [1, 1.12])
-  const blur = useTransform(p, [0.08, 0.17], ['blur(0px)', 'blur(8px)'])
   const cols = [CONTENT_FEED.slice(0, 3), CONTENT_FEED.slice(3, 6), CONTENT_FEED.slice(6, 9), CONTENT_FEED.slice(9, 12)]
   return (
-    <motion.div style={{ opacity, scale, filter: blur }} className="absolute inset-0">
-      <div className="grid h-[130%] translate-y-[-6%] grid-cols-2 gap-3 p-3 sm:grid-cols-4">
-        {cols.map((c, i) => <MarqueeCol key={i} imgs={c} dur={22 + i * 5} up={i % 2 === 0} />)}
+    <motion.div style={{ opacity, scale }} className="absolute inset-0">
+      <div className="flex h-[130%] translate-y-[-6%] gap-3 p-3">
+        {cols.map((c, i) => <MarqueeCol key={i} imgs={c} dur={22 + i * 5} up={i % 2 === 0} hideMobile={i >= 2} />)}
       </div>
       <div className="absolute inset-0 [background:radial-gradient(ellipse_62%_55%_at_center,rgba(0,0,0,0.72),rgba(0,0,0,0.42))]" />
     </motion.div>
   )
 }
-function MarqueeCol({ imgs, dur, up }: { imgs: string[]; dur: number; up: boolean }) {
+function MarqueeCol({ imgs, dur, up, hideMobile }: { imgs: string[]; dur: number; up: boolean; hideMobile?: boolean }) {
   const loop = [...imgs, ...imgs]
   return (
-    <div className="overflow-hidden">
+    <div className={`h-full flex-1 overflow-hidden ${hideMobile ? 'max-sm:hidden' : ''}`}>
       <motion.div animate={{ y: up ? ['0%', '-50%'] : ['-50%', '0%'] }} transition={{ duration: dur, repeat: Infinity, ease: 'linear' }} className="flex flex-col gap-3">
         {loop.map((src, i) => (
           <div key={i} className="aspect-4/5 overflow-hidden rounded-2xl">
@@ -141,7 +140,7 @@ const NICHE_POS: { l: string; top: string; hideMobile?: boolean }[] = [
   { l: '50%', top: '86%', hideMobile: true },
 ]
 
-const SIM_DOTS = Array.from({ length: 104 }, (_, i) => {
+const SIM_DOTS = Array.from({ length: 60 }, (_, i) => {
   const a = (i * 137.5) % 100, b = (i * 263.1) % 100, band = i % 4
   let x: number, y: number
   if (band === 0) { x = 2 + (a / 100) * 24; y = 4 + (b / 100) * 92 }        
@@ -182,7 +181,7 @@ function NicheCard({ p, n, pos, i }: { p: MotionValue<number>; n: (typeof STORY_
   const s = 0.42 + i * 0.015
   const opacity = useTransform(p, [s, s + 0.05, 0.62, 0.67], [0, 1, 1, 0])
   const scale = useTransform(p, [s, s + 0.06], [0.7, 1])
-  const barW = useTransform(p, [0.46, 0.6], ['0%', `${n.aff * 100}%`])
+  const barScale = useTransform(p, [0.46, 0.6], [0, n.aff])
   const strong = n.aff >= 0.7
   return (
     <motion.div style={{ opacity, scale, left: pos.l, top: pos.top }} className={`absolute w-28 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border bg-white shadow-lift sm:w-40 ${pos.hideMobile ? 'max-sm:hidden' : ''} ${strong ? 'border-brand-300 ring-2 ring-brand-500/20' : 'border-line'}`}>
@@ -190,7 +189,7 @@ function NicheCard({ p, n, pos, i }: { p: MotionValue<number>; n: (typeof STORY_
       <div className="p-2">
         <p className="truncate text-[11px] font-bold text-ink">{n.name}</p>
         <div className="mt-1 flex items-center gap-1.5">
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-neutral-100"><motion.div style={{ width: barW }} className="h-full rounded-full bg-linear-to-r from-brand-500 to-teal-500" /></div>
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-neutral-100"><motion.div style={{ scaleX: barScale }} className="h-full w-full origin-left rounded-full bg-linear-to-r from-brand-500 to-teal-500" /></div>
           <span className="text-[10px] font-bold text-brand-700">{Math.round(n.aff * 100)}%</span>
         </div>
       </div>
@@ -200,9 +199,14 @@ function NicheCard({ p, n, pos, i }: { p: MotionValue<number>; n: (typeof STORY_
 
 // ACT - 3
 function Counter({ mv, pct, comma }: { mv: MotionValue<number>; pct?: boolean; comma?: boolean }) {
-  const [n, setN] = useState(0)
-  useMotionValueEvent(mv, 'change', (v) => setN(v))
-  return <>{pct ? `${Math.round(n)}%` : comma ? Math.round(n).toLocaleString('en-US') : formatCompact(n)}</>
+  const ref = useRef<HTMLSpanElement>(null)
+  const fmt = (v: number) => (pct ? `${Math.round(v)}%` : comma ? Math.round(v).toLocaleString('en-US') : formatCompact(v))
+  // write the DOM directly on each frame instead of setState — a scroll-driven
+  // counter must not trigger a React re-render per frame (that storms on fast scroll)
+  useMotionValueEvent(mv, 'change', (v) => {
+    if (ref.current) ref.current.textContent = fmt(v)
+  })
+  return <span ref={ref}>{fmt(mv.get())}</span>
 }
 
 function PredictLayer({ p }: { p: MotionValue<number> }) {
@@ -279,10 +283,10 @@ function RecommendLayer({ p }: { p: MotionValue<number> }) {
           </div>
           <div className="grid grid-cols-3 gap-3">
             {metrics.map((m) => (
-              <div key={m.l} className="rounded-2xl border border-line bg-white/90 px-4 py-3 text-center shadow-soft backdrop-blur"><p className="text-[10px] uppercase tracking-wide text-muted">{m.l}</p><p className="mt-0.5 text-2xl font-black tracking-tight text-ink">{m.v}</p><p className="text-[10px] text-muted">{m.s}</p></div>
+              <div key={m.l} className="rounded-2xl border border-line bg-white/95 px-4 py-3 text-center shadow-soft"><p className="text-[10px] uppercase tracking-wide text-muted">{m.l}</p><p className="mt-0.5 text-2xl font-black tracking-tight text-ink">{m.v}</p><p className="text-[10px] text-muted">{m.s}</p></div>
             ))}
           </div>
-          <div className="rounded-2xl border border-line bg-white/90 p-4 shadow-soft backdrop-blur">
+          <div className="rounded-2xl border border-line bg-white/95 p-4 shadow-soft">
             <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted"><Zap className="h-3.5 w-3.5 text-brand-600" /> Recommended edits</p>
             {mockSuggestions.slice(0, 3).map((sug, i) => (
               <div key={sug.title} className="flex items-center gap-3 border-t border-line py-2 first:border-0">
@@ -296,7 +300,7 @@ function RecommendLayer({ p }: { p: MotionValue<number> }) {
       </div>
 
       <div className="absolute inset-0 z-10 flex items-center px-4 sm:hidden">
-        <div className="w-full rounded-3xl border border-line bg-white/95 p-4 shadow-lift backdrop-blur">
+        <div className="w-full rounded-3xl border border-line bg-white/95 p-4 shadow-lift">
           <div className="flex items-center justify-center gap-2 rounded-2xl border border-brand-200 bg-brand-50 px-3 py-2">
             <TrendingUp className="h-4 w-4 text-brand-700" />
             <p className="text-sm font-black text-brand-700">Verdict: viral potential</p>

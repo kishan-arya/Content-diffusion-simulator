@@ -31,7 +31,7 @@ export function TagInput({value,onChange,placeholder = 'Add a tag and press Ente
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center gap-1.5 rounded-xl border border-line bg-white px-2.5 py-2 ' +
+        'flex flex-wrap items-center gap-1.5 border border-line bg-white px-2.5 py-2 ' +
           'transition-colors focus-within:border-brand-400 focus-within:ring-4 focus-within:ring-brand-500/10',
       )}
     >

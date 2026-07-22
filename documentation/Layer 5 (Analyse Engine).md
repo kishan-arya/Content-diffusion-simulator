@@ -398,7 +398,7 @@ The engine returns the exact shape the frontend expects.
 ```text
 POST /analyse
     ?content_id=<id>     content analyzed via /context/analyze  (required)
-    &user_id=<id>        creator analyzed via /user/creator/analyze  (required)
+    &user_id=<id>        creator analyzed via /creator/analyze  (required)
     &runs=5000           baseline Monte Carlo runs
     &scenario_runs=1000  runs per counterfactual
     &seed=42             reproducible forecast + paired counterfactuals

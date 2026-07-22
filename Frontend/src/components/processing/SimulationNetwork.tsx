@@ -1,35 +1,7 @@
 import { useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Heart, MessageCircle, Share2, Bookmark, UserPlus, type LucideIcon } from 'lucide-react'
 import { formatCompact } from '../../lib/cn'
-
-export interface ReactionAction {
-  verb: string
-  Icon: LucideIcon
-  color: string
-}
-export interface Reaction {
-  id: number
-  persona: string
-  action: ReactionAction
-}
-
-const ACTIONS: { action: ReactionAction; weight: number }[] = [
-  { action: { verb: 'liked', Icon: Heart, color: 'text-rose-500' }, weight: 44 },
-  { action: { verb: 'commented', Icon: MessageCircle, color: 'text-sky-600' }, weight: 20 },
-  { action: { verb: 'shared', Icon: Share2, color: 'text-brand-600' }, weight: 16 },
-  { action: { verb: 'saved', Icon: Bookmark, color: 'text-amber-600' }, weight: 12 },
-  { action: { verb: 'followed', Icon: UserPlus, color: 'text-teal-600' }, weight: 8 },
-]
-const WEIGHT_TOTAL = ACTIONS.reduce((n, a) => n + a.weight, 0)
-
-export function pickAction(): ReactionAction {
-  let r = Math.random() * WEIGHT_TOTAL
-  for (const a of ACTIONS) {
-    if ((r -= a.weight) <= 0) return a.action
-  }
-  return ACTIONS[0].action
-}
+import type { Reaction } from './reactions'
 
 const WAVES = 6
 const PER_WAVE = [1, 5, 9, 13, 17, 21, 25]
@@ -103,7 +75,7 @@ export function SimulationNetwork({
   reached: number
   reactions: Reaction[]
 }) {
-  const nodes = useMemo(buildGraph, [])
+  const nodes = useMemo(() => buildGraph(), [])
   const visible = nodes.filter((n) => n.wave <= wave)
 
   return (

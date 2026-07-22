@@ -1,27 +1,32 @@
 import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from 'react'
 import { authorizeCreator, analyzeContent, runSimulationApi, type CreatorProfile } from '../lib/api'
-import { mockCreator, type ContentAnalysis, type SimOutput, type Suggestion } from '../config/site'
+import { type ContentAnalysis, type SimOutput, type Suggestion, type Verdict } from '../config/site'
+import { useToast } from '../components/ui/Toast'
 
+// input type for content L3
 export type Modality = 'video' | 'image' | 'text'
 
+// Inputs required for the Simulator
 export interface SimInputs {
   handle: string
-  platform: string
   authorized: boolean
   modality: Modality
-  fileName: string
+  fileName: string           
+  file: File | null         // Content File
   description: string
   tags: string[]
 }
 
+// Final Output displayed on the Dashboard (L2,L3,L4,L5)
 export interface SimResult {
   analysis: ContentAnalysis
   output: SimOutput
   creator: CreatorProfile
   suggestions: Suggestion[]
+  verdict: Verdict
 }
 
-export type PipelineStatus = 'idle' | 'analyzing' | 'simulating' | 'done'
+export type PipelineStatus = 'idle' | 'analyzing' | 'simulating' | 'done' | 'error'
 
 interface SimulationContextValue {
   inputs: SimInputs
@@ -29,17 +34,18 @@ interface SimulationContextValue {
   creator: CreatorProfile | null
   result: SimResult | null
   status: PipelineStatus
-  connect: (handle: string, platform: string) => Promise<void>
+  connect: (handle: string, platform: string) => Promise<CreatorProfile>
+  disconnect: () => void
   startPipeline: () => Promise<void>
   reset: () => void
 }
 
 const DEFAULT_INPUTS: SimInputs = {
   handle: '',
-  platform: 'instagram',
   authorized: false,
   modality: 'video',
   fileName: '',
+  file: null,
   description: '',
   tags: [],
 }
@@ -47,6 +53,7 @@ const DEFAULT_INPUTS: SimInputs = {
 const SimulationContext = createContext<SimulationContextValue | null>(null)
 
 export function SimulationProvider({ children }: { children: ReactNode }) {
+  const { toast } = useToast()
   const [inputs, setInputsState] = useState<SimInputs>(DEFAULT_INPUTS)
   const [creator, setCreator] = useState<CreatorProfile | null>(null)
   const [result, setResult] = useState<SimResult | null>(null)
@@ -69,7 +76,18 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     creatorRef.current = profile
     setCreator(profile)
     setInputsState((prev) => {
-      const next = { ...prev, authorized: true }
+      const next = { ...prev, authorized: profile.platforms.length > 0 }
+      inputsRef.current = next
+      return next
+    })
+    return profile
+  }, [])
+
+  const disconnect = useCallback(() => {
+    creatorRef.current = null
+    setCreator(null)
+    setInputsState((prev) => {
+      const next = { ...prev, authorized: false }
       inputsRef.current = next
       return next
     })
@@ -79,16 +97,23 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     if (runningRef.current) return
     runningRef.current = true
 
-    setStatus('analyzing')
-    const analysis = await analyzeContent(inputsRef.current)
+    try {
+      setStatus('analyzing')
+      const analysis = await analyzeContent(inputsRef.current)
 
-    setStatus('simulating')
-    const usedCreator = creatorRef.current ?? mockCreator
-    const { output, suggestions } = await runSimulationApi(analysis, usedCreator)
+      const usedCreator = creatorRef.current
+      if (!usedCreator) throw new Error('No creator connected — connect an account first.')
 
-    setResult({ analysis, output, creator: usedCreator, suggestions })
-    setStatus('done')
-  }, [])
+      setStatus('simulating')
+      const { output, verdict, suggestions } = await runSimulationApi(analysis, usedCreator)
+
+      setResult({ analysis, output, creator: usedCreator, suggestions, verdict })
+      setStatus('done')
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Something went wrong running the simulation.', 'error')
+      setStatus('error')
+    }
+  }, [toast])
 
   const reset = useCallback(() => {
     setInputsState(DEFAULT_INPUTS)
@@ -102,7 +127,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
 
   return (
     <SimulationContext.Provider
-      value={{ inputs, setInputs, creator, result, status, connect, startPipeline, reset }}
+      value={{ inputs, setInputs, creator, result, status, connect, disconnect, startPipeline, reset }}
     >
       {children}
     </SimulationContext.Provider>

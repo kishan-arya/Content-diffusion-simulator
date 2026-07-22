@@ -118,7 +118,8 @@ static void apply_op(Content& c, const json& op) {
 static json run_scenarios(const vector<Persona>& personas, const Content& base, const Trend& base_trend, const Creator& creator, const Config& cfg, const json& spec) {
     Config vcfg = cfg;   
     // for scenarios we run 2000 monte carlo iterations rather than 5000 
-    // in engine.py analyse function we pass the value of runs                     
+    // in engine.py analyse function we pass the value of runs    
+    // currently set to 1000                 
     vcfg.runs = spec.value("runs", 2000);       
     json arr = json::array();
     for (const auto& sc : spec.at("scenarios")) {

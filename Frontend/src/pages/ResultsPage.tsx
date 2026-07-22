@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { RefreshCw} from 'lucide-react'
@@ -7,7 +7,7 @@ import { Button } from '../components/ui/Button'
 import { useSimulation } from '../state/SimulationContext'
 import { EASE } from '../lib/motion'
 import { formatCompact } from '../lib/cn'
-import { mockContentAnalysis, mockSimOutput, mockCreator, mockSuggestions, DIMENSIONS,} from '../config/site'
+import { DIMENSIONS } from '../config/site'
 import ForecastSpread from '../components/resultspage/ForecastSpread'
 import MeaningSpread from '../components/resultspage/MeaningSpread'
 
@@ -38,7 +38,7 @@ function TabSwitch({tab, setTab, layoutKey, full}: {
             {active && (
               <motion.span
                 layoutId={`results-tab-${layoutKey}`}
-                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                transition={{ type: 'tween', duration: 0.25, ease: 'easeOut' }}
                 className="absolute inset-0 rounded-full bg-brand-600"
               />
             )}
@@ -48,12 +48,6 @@ function TabSwitch({tab, setTab, layoutKey, full}: {
       })}
     </div>
   )
-}
-
-function verdictFor(p: number) {
-  if (p >= 0.25) return { title: 'This could blow up.', sub: 'Strong breakout signals across the crowd.' }
-  if (p >= 0.08) return { title: 'This one’s got legs.', sub: 'Dependable reach — with a real shot at more.' }
-  return { title: 'Not yet. But it’s fixable.', sub: 'A few edits could change this post’s fate.' }
 }
 
 function Ticker({ items }: { items: string[] }) {
@@ -82,15 +76,13 @@ export default function ResultsPage() {
   const { result, reset, inputs } = useSimulation()
   const [tab, setTab] = useState<Tab>('forecast')
 
-  // Backend result
-  const data = result ?? {
-    analysis: mockContentAnalysis,
-    output: mockSimOutput,
-    creator: mockCreator,
-    suggestions: mockSuggestions,
-  }
-  const { analysis, output, creator, suggestions } = data
-  const verdict = verdictFor(output.viral_probability)
+  // no result (e.g. direct navigation) -> back to the form
+  useEffect(() => {
+    if (!result) navigate('/get-started', { replace: true })
+  }, [result, navigate])
+  if (!result) return null
+
+  const { analysis, output, creator, suggestions, verdict } = result
   const viralPct = Math.round(output.viral_probability * 100)
   const handle = inputs.handle.trim() || creator.handle
   const today = new Date().toLocaleDateString('en-US', {

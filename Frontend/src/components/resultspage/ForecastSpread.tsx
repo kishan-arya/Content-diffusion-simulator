@@ -2,11 +2,17 @@ import { motion } from 'motion/react'
 import { Flame, Zap, AtSign } from 'lucide-react'
 import { EASE } from '../../lib/motion'
 import { formatCompact } from '../../lib/cn'
-import { mockContentAnalysis, mockSimOutput, mockCreator, mockSuggestions, DIMENSIONS,} from '../../config/site'
+import { DIMENSIONS, type ContentAnalysis, type SimOutput, type Suggestion } from '../../config/site'
+import type { CreatorProfile } from '../../lib/api'
 import CountUp from "./CountUp"
 import Kicker from './Kicker'
 
-const CREATOR_ROWS: { key: keyof typeof mockCreator; label: string }[] = [
+const PLATFORM_LABEL: Record<string, string> = {
+  instagram: 'Instagram',
+  youtube: 'YouTube',
+}
+
+const CREATOR_ROWS: { key: keyof CreatorProfile; label: string }[] = [
   { key: 'trust', label: 'Trust' },
   { key: 'momentum', label: 'Momentum' },
   { key: 'niche_authority', label: 'Niche authority' },
@@ -49,10 +55,10 @@ const confWord = (c: number) => (c >= 0.75 ? 'high confidence' : c >= 0.5 ? 'sol
 export default function ForecastSpread({
   analysis, output, creator, suggestions, viralPct, verdict, handle,
 }: {
-  analysis: typeof mockContentAnalysis
-  output: typeof mockSimOutput
-  creator: typeof mockCreator
-  suggestions: typeof mockSuggestions
+  analysis: ContentAnalysis
+  output: SimOutput
+  creator: CreatorProfile
+  suggestions: Suggestion[]
   viralPct: number
   verdict: { title: string; sub: string }
   handle: string
@@ -244,7 +250,7 @@ export default function ForecastSpread({
           <p className="mt-2 flex items-center gap-1.5 text-[13px] text-muted">
             <AtSign className="h-3.5 w-3.5 text-brand-600" />
             Calibrated to <strong className="text-ink">{handle}</strong> on{' '}
-            <span className="capitalize">{creator.platform}</span>
+            <span>{creator.platforms.map((p) => PLATFORM_LABEL[p] ?? p).join(' + ')}</span>
           </p>
           <div className="mt-4 space-y-2.5">
             {CREATOR_ROWS.map((r) => (

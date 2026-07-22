@@ -5,7 +5,8 @@ import { Sparkles, Radio, Quote } from 'lucide-react'
 import { Container } from '../components/ui/Container'
 import { Badge } from '../components/ui/Badge'
 import { VisionScan } from '../components/processing/VisionScan'
-import { SimulationNetwork, pickAction, type Reaction } from '../components/processing/SimulationNetwork'
+import { SimulationNetwork } from '../components/processing/SimulationNetwork'
+import { pickAction, type Reaction } from '../components/processing/reactions'
 import { useSimulation } from '../state/SimulationContext'
 import { mockSimOutput, MOCK_PERSONAS } from '../config/site'
 import { EASE } from '../lib/motion'
@@ -108,7 +109,9 @@ export default function ProcessingPage() {
   const [reactions, setReactions] = useState<Reaction[]>([])
   const reactionId = useRef(0)
   const statusRef = useRef(status)
-  statusRef.current = status
+  useEffect(() => {
+    statusRef.current = status
+  }, [status])
 
   const reachedByWave = useMemo(() => {
     const slice = mockSimOutput.mean_wave.slice(0, WAVES)
@@ -126,6 +129,11 @@ export default function ProcessingPage() {
   useEffect(() => {
     void startPipeline()
   }, [startPipeline])
+
+  // pipeline failed -> the toast shows what went wrong; bounce back to the form
+  useEffect(() => {
+    if (status === 'error') navigate('/get-started', { replace: true })
+  }, [status, navigate])
 
   const handleStudyComplete = useCallback(() => setPhase('simulating'), [])
 

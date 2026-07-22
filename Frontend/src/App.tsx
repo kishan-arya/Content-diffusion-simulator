@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { ToastProvider } from './components/ui/Toast'
 import { SimulationProvider } from './state/SimulationContext'
 import LandingPage from './pages/LandingPage'
 import GetStartedPage from './pages/GetStartedPage'
@@ -16,16 +17,18 @@ function ScrollToTop() {
 
 export default function App() {
   return (
-    <SimulationProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/get-started" element={<GetStartedPage />} />
-          <Route path="/processing" element={<ProcessingPage />} />
-          <Route path="/results" element={<ResultsPage />} />
-        </Routes>
-      </BrowserRouter>
-    </SimulationProvider>
+    <ToastProvider>
+      <SimulationProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/get-started" element={<GetStartedPage />} />
+            <Route path="/processing" element={<ProcessingPage />} />
+            <Route path="/results" element={<ResultsPage />} />
+          </Routes>
+        </BrowserRouter>
+      </SimulationProvider>
+    </ToastProvider>
   )
 }

@@ -108,16 +108,16 @@ ngrok http 8000
 
 ngrok prints a forwarding URL such as `https://abc123.ngrok-free.app`. Then:
 
-1. Set the redirect URI in `.env` to the tunnel's **`/user/auth/instagram/callback`** path:
+1. Set the redirect URI in `.env` to the tunnel's **`/auth/instagram/callback`** path:
    ```
-   INSTAGRAM_REDIRECT_URI="https://abc123.ngrok-free.app/user/auth/instagram/callback"
+   INSTAGRAM_REDIRECT_URI="https://abc123.ngrok-free.app/auth/instagram/callback"
    ```
 2. Add the **same** URL to your Meta app's OAuth "Valid redirect URIs".
 3. Restart `python run.py`.
 
 Notes:
 - **YouTube** uses Google OAuth, which permits `http://localhost`, ngrok is only needed for Instagram.
-- Start OAuth by opening the `/user/auth/...` URLs as a **real browser navigation**, not from the Swagger docs (the docs can't follow the external redirect).
+- Start OAuth by opening the `/auth/...` URLs as a **real browser navigation**, not from the Swagger docs (the docs can't follow the external redirect).
 - Instagram works only for **public Business / Creator** accounts.
 
 ---
@@ -126,7 +126,7 @@ Notes:
 
 | Layer | Endpoints |
 | ----- | --------- |
-| 2. User Engine | `GET /user/auth/{youtube,instagram}` · `GET /user/auth/{youtube,instagram}/callback` · `GET /user/creator/analyze` |
+| 2. User Engine | `GET /auth/{youtube,instagram}` · `GET /auth/{youtube,instagram}/callback` · `GET /creator/analyze` |
 | 3. Context Engine | `POST /context/analyze/{text,image,video}` · `GET /context/content` |
 | 4. Simulator | `POST /simulate` |
 | 5. Analyse Engine | `POST /analyse` |

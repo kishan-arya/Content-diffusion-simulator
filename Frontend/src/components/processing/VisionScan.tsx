@@ -218,7 +218,7 @@ export function VisionScan({ waiting = false, onComplete }: { waiting?: boolean;
                   : { x: 0, y: 0, scale: 0.25, opacity: 0 }
             const transition =
               stage === 'scan'
-                ? { type: 'spring' as const, stiffness: 150, damping: 19, delay: 0.5 + c.i * 0.22 }
+                ? { type: 'tween' as const, duration: 0.55, ease: 'easeOut' as const, delay: 0.5 + c.i * 0.22 }
                 : settled
                   ? { duration: 0.75, delay: c.i * 0.035, ease: EASE }
                   : { duration: 0.5, delay: c.i * 0.02, ease: 'easeIn' as const }

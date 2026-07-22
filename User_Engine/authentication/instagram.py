@@ -35,6 +35,14 @@ def ig_get_auth_url(state: str) -> str:
     return f"{AUTH_URL}?{urlencode(params)}"
 
 
+def _raise_with_body(r: requests.Response) -> None:
+    """Like raise_for_status, but keeps Meta's error body (the actual reason)
+    and drops the query string (it carries the secret and token)."""
+    if not r.ok:
+        endpoint = r.url.split("?")[0]
+        raise requests.HTTPError(f"{r.status_code} from {endpoint}: {r.text}", response=r)
+
+
 def ig_exchange_code(code: str) -> dict:
     """Exchange an auth code for a long-lived token dict. Our server stores it."""
     r = requests.post(TOKEN_URL, data={
@@ -44,7 +52,7 @@ def ig_exchange_code(code: str) -> dict:
         "redirect_uri": REDIRECT_URI,
         "code": code,
     })
-    r.raise_for_status()
+    _raise_with_body(r)
     short = r.json()
     short_lived_token = short["access_token"]
     ig_user_id = short.get("user_id")
@@ -54,7 +62,7 @@ def ig_exchange_code(code: str) -> dict:
         "client_secret": CLIENT_SECRET,
         "access_token": short_lived_token,
     })
-    r.raise_for_status()
+    _raise_with_body(r)
     long = r.json()
     long_lived_token=long["access_token"]
 

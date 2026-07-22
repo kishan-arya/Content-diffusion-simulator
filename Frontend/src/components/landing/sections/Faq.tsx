@@ -25,6 +25,10 @@ const FAQS: QA[] = [
     a: 'Reech models short-form, feed-driven distribution — the mechanics behind platforms like Instagram, TikTok, and YouTube Shorts. You can analyze video, image, or text posts. Each modality is scored on the same eight engagement dimensions, so a Reel and a carousel are judged by the same underlying audience.',
   },
   {
+    q: 'Can I connect more than one account?',
+    a: 'Yes — you can link your Instagram and YouTube accounts at the same time. Reech merges both into a single creator profile, so your trust, momentum, and audience-quality scores reflect your combined footprint rather than one platform in isolation. One connection is enough to run a forecast, but linking both gives the simulation a sharper picture of who already listens to you.',
+  },
+  {
     q: 'Does it handle video differently from images or text?',
     a: 'Yes. For video we transcribe the audio and read pacing, hook timing, and on-screen context; for images we read composition, subject, and style; for text we read the claim, tone, and payoff. All three feed into the same shareability and saveability composites, so forecasts stay comparable across formats.',
   },

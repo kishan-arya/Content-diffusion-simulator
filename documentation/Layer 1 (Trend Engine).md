@@ -967,6 +967,16 @@ graph LR
 ```
 
 
+## Tag Dataset
+
+The tag hierarchy is built from the **IAB Tech Lab** advertising taxonomies:
+
+* [Content Taxonomy 3.1](https://github.com/InteractiveAdvertisingBureau/Taxonomies/blob/develop/Content%20Taxonomies/Content%20Taxonomy%203.1.tsv)
+* [Ad Product Taxonomy 2.0](https://github.com/InteractiveAdvertisingBureau/Taxonomies/blob/develop/Ad%20Product%20Taxonomies/Ad%20Product%20Taxonomy%202.0.tsv)
+
+Their tiered category paths (e.g. `Sports > Cricket > International Cricket`) provide the standardized tag nodes and their parent/child structure.
+
+
 ## Why Hierarchical Tags?
 
 Benefits:
@@ -1112,29 +1122,6 @@ Local entity caching.
 
 ---
 
-# 15. Current Capabilities
-
-[✓] Multi-source trend collection
-
-[✓] Named entity extraction
-
-[✓] Keyword extraction
-
-[✓] Wikidata candidate retrieval
-
-[✓] Graph construction
-
-[✓] Persistent graph storage
-
-[✓] Graph-based entity resolution
-
-[✓] Neighborhood-aware semantic tagging
-
-[✓] Hierarchical tags
-
-[✓] Automatic graph pruning
-
----
 
 # 16. Conclusion
 

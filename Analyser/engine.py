@@ -74,12 +74,13 @@ def analyze(content_arg: str, creator_arg: str | None, *, data_dir: str | os.Pat
 
     logger.info("Analyse: %d levers tested, %d suggestions (top lift %.1f%%)",len(raw.get("scenarios", [])) - 1, len(report["suggestions"]),levers[0]["delta_reach_pct"] if levers else 0.0)
 
-    return {
+    result = {
         "output": output,
         "verdict": report["verdict"],
         "suggestions": report["suggestions"],
         "content_id": raw.get("content_id"),
         "audience_pool": raw.get("audience_pool"),
         "trend_alignment": raw.get("trend_alignment"),
-        "engagement": raw.get("engagement"),
+        "engagement": raw.get("engagement")
     }
+    return result

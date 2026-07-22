@@ -2,7 +2,7 @@ import type { InputHTMLAttributes, TextareaHTMLAttributes, ReactNode } from 'rea
 import { cn } from '../../lib/cn'
 
 const controlBase =
-  'w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-muted/60 ' +
+  'w-full border border-line bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-muted/60 ' +
   'transition-colors focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/10 ' +
   'disabled:pointer-events-none disabled:opacity-60'
 
